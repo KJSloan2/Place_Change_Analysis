@@ -64,3 +64,15 @@ def json_serialize(obj):
     else:
         raise TypeError(f"Type {type(obj)} not serializable")
 ######################################################################################
+def flatten_array(x):
+    flattened = []
+    for i in x:
+        if isinstance(i, (np.ndarray, list)):
+            if len(i) > 0:
+                flattened.append(i[0])
+            else:
+                flattened.append(0)  # Or float('nan') depending on how you want to handle it
+        else:
+            flattened.append(i)
+    return flattened
+######################################################################################
