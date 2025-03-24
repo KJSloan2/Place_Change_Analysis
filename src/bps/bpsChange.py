@@ -11,6 +11,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils import calc_yoy_change
 from utils import check_vals
+from utils import flatten_array
 ######################################################################################
 df_composite = pd.read_csv(os.path.join(r"data", "housing", "uscb_bps", "compositeBPS.csv"),encoding="utf-8")
 #YEAR,METRIC,CSA,CBSA,Name,Total,1 Unit,2 Units,3 and 4 Units,5 Units or More
@@ -77,19 +78,21 @@ for i, feature in enumerate(fc["features"]):
         for propKey, propLabel in propKeys.items():
             yoyDeltas = calc_yoy_change(fc["features"][i]["properties"][categoryKey+"_"+propKey])
             meanPrctDelta, meanDelta = 0, 0
+            try:
+                if len(yoyDeltas["prct_deltas"]) != 0:
+                    meanPrctDelta = np.mean(flatten_array(yoyDeltas["prct_deltas"]))
+                    meanDelta = np.mean(flatten_array(yoyDeltas["deltas"]))
 
-            if len(yoyDeltas["prct_deltas"]) != 0:
-                print(yoyDeltas["prct_deltas"], yoyDeltas["deltas"])
-                meanPrctDelta = np.mean(yoyDeltas["prct_deltas"])
-                meanDelta = np.mean(yoyDeltas["deltas"])
+                values = check_vals([meanPrctDelta, meanDelta])
 
-            values = check_vals([meanPrctDelta, meanDelta])
+                fc["features"][i]["properties"][categoryKey+"_"+propKey+"_prctChange"] = round((values[0]),2)
+                fc["features"][i]["properties"][categoryKey+"_"+propKey+"_avgChange"] = round((values[1]),2)
 
-            fc["features"][i]["properties"][categoryKey+"_"+propKey+"_prctChange"] = round((values[0]),2)
-            fc["features"][i]["properties"][categoryKey+"_"+propKey+"_avgChange"] = round((values[1]),2)
-
-            del fc["features"][i]["properties"][categoryKey+"_"+propKey]
-
+                del fc["features"][i]["properties"][categoryKey+"_"+propKey]
+            except Exception as e3:
+                print(e3)
+                print("prct_deltas: ", flatten_array(yoyDeltas["prct_deltas"]))
+                print("deltas: ", flatten_array(yoyDeltas["deltas"]))
 ######################################################################################
 with open(os.path.join(r'data', 'interum', 'bps.geojson'), "w", encoding='utf-8') as output_json:
 	output_json.write(json.dumps(fc, indent=1, ensure_ascii=True))
