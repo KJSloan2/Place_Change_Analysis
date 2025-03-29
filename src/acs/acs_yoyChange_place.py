@@ -1,10 +1,15 @@
+'''
+ Performs year over year change (YoYC) calculations on various ACS products
+ using the USCB designated places geographic tabulation.
+ YoYC calculations include start-end year change, avergage YoY real change,
+ average YoY percent change, slope of real change as single value scaler.
+ '''
 import pandas as pd
 import json
 import numpy as np
 import os
 import re
 import fiona
-import csv
 import sys
 ######################################################################################
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -98,6 +103,7 @@ with fiona.open(placeGeojson, mode="r") as placeGeojson:
                 estimates = estimatesData["estimates"]
                 percent_changes, avg_percent_change, slope, slope_direction = None, None,  None, None
                 if len(estimates) > 1:
+                    seChange = estimates[-1]-estimates[0]
                     percent_changes, avg_percent_change = calc_prct_change(estimates)
                     slope = calc_slope(estimates)
                     if slope >0:
@@ -117,6 +123,7 @@ with fiona.open(placeGeojson, mode="r") as placeGeojson:
                 summary[fileKey][dataKey]["avg_prct_change"] = avg_percent_change
                 summary[fileKey][dataKey]["slope"] = slope
                 summary[fileKey][dataKey]["slope_direction"] = slope_direction
+                summary[fileKey][dataKey]["se_change"] = seChange
 
             outputData.append(summary)
         ##############################################################################
